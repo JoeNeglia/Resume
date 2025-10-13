@@ -1,4 +1,4 @@
-# 📄 Joe Neglia — LaTeX Résumé Repository
+# Joe Neglia — LaTeX Résumé Repository
 
 This repository contains my LaTeX résumé along with archived versions automatically maintained through GitHub Actions.
 
