@@ -8,28 +8,29 @@ on:
       - main
 
 permissions:
-  contents: write  # allows the workflow to push back to the repo
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Check out repo (with previous commit)
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2   # we need HEAD^ for the previous PDF
+          fetch-depth: 2
 
-      - name: Archive previous resume.pdf (if it existed)
+      - name: Archive previous JoeNeglia_Resume.pdf (if it existed)
         run: |
           set -e
           mkdir -p archive
-          # Try to read previous commit's PDF; ignore error if it didn't exist.
+          # Try to read the previous commit's PDF; ignore if it doesn't exist
           if git rev-parse HEAD^ >/dev/null 2>&1; then
-            if git show HEAD^:current/resume.pdf >/dev/null 2>&1; then
-              git show HEAD^:current/resume.pdf > archive/resume_$(date +"%Y-%m-%d_%H-%M-%S").pdf
-              echo "Archived previous resume.pdf"
+            if git show HEAD^:current/JoeNeglia_Resume.pdf >/dev/null 2>&1; then
+              git show HEAD^:current/JoeNeglia_Resume.pdf > archive/JoeNeglia_Resume_$(date +"%Y-%m-%d_%H-%M-%S").pdf
+              echo "Archived previous JoeNeglia_Resume.pdf"
             else
-              echo "No previous resume.pdf to archive"
+              echo "No previous resume PDF found to archive"
             fi
           else
             echo "No previous commit to inspect"
@@ -39,20 +40,29 @@ jobs:
         uses: xu-cheng/latex-action@v3
         with:
           root_file: current/resume.tex
-          # Uncomment if you need xelatex/lualatex:
+          output_directory: current
+          # Uncomment if you use XeLaTeX:
           # latexmk_use_xelatex: true
+
+      - name: Rename output to JoeNeglia_Resume.pdf
+        run: |
+          set -e
+          if [ -f current/resume.pdf ]; then
+            mv current/resume.pdf current/JoeNeglia_Resume.pdf
+            echo "Renamed resume.pdf → JoeNeglia_Resume.pdf"
+          else
+            echo "Warning: resume.pdf not found after build."
+          fi
 
       - name: Commit updated PDFs
         run: |
           set -e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # Add new archive (if created) and updated current/resume.pdf
           git add archive/*.pdf || true
-          git add current/resume.pdf || true
-          # Only commit if there are changes
+          git add current/JoeNeglia_Resume.pdf || true
           if ! git diff --cached --quiet; then
-            git commit -m "chore(resume): archive old and rebuild current ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))"
+            git commit -m "chore(resume): archive old and rebuild JoeNeglia_Resume.pdf ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))"
             git push
           else
             echo "No changes to commit"
