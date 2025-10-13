@@ -46,6 +46,7 @@ jobs:
         run: |
           set -e
           echo "Looking for output PDF..."
+          # Find the first generated PDF
           NEW_PDF=$(find current -maxdepth 1 -name '*.pdf' | head -n 1 || true)
 
           if [ -z "$NEW_PDF" ]; then
@@ -53,8 +54,15 @@ jobs:
             exit 1
           fi
 
-          mv "$NEW_PDF" current/JoeNeglia_Resume.pdf
-          echo "✅ New PDF renamed to JoeNeglia_Resume.pdf"
+          TARGET="current/JoeNeglia_Resume.pdf"
+
+          # Only rename if the output filename differs
+          if [ "$NEW_PDF" != "$TARGET" ]; then
+            mv "$NEW_PDF" "$TARGET"
+            echo "✅ Renamed $NEW_PDF → $TARGET"
+          else
+            echo "✅ PDF already correctly named ($TARGET)"
+          fi
 
       - name: Commit updated PDFs
         run: |
