@@ -1,0 +1,59 @@
+name: Build & Archive Resume
+
+on:
+  push:
+    paths:
+      - 'current/resume.tex'
+    branches:
+      - main
+
+permissions:
+  contents: write  # allows the workflow to push back to the repo
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo (with previous commit)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2   # we need HEAD^ for the previous PDF
+
+      - name: Archive previous resume.pdf (if it existed)
+        run: |
+          set -e
+          mkdir -p archive
+          # Try to read previous commit's PDF; ignore error if it didn't exist.
+          if git rev-parse HEAD^ >/dev/null 2>&1; then
+            if git show HEAD^:current/resume.pdf >/dev/null 2>&1; then
+              git show HEAD^:current/resume.pdf > archive/resume_$(date +"%Y-%m-%d_%H-%M-%S").pdf
+              echo "Archived previous resume.pdf"
+            else
+              echo "No previous resume.pdf to archive"
+            fi
+          else
+            echo "No previous commit to inspect"
+          fi
+
+      - name: Build LaTeX (resume.tex)
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: current/resume.tex
+          # Uncomment if you need xelatex/lualatex:
+          # latexmk_use_xelatex: true
+
+      - name: Commit updated PDFs
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Add new archive (if created) and updated current/resume.pdf
+          git add archive/*.pdf || true
+          git add current/resume.pdf || true
+          # Only commit if there are changes
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(resume): archive old and rebuild current ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))"
+            git push
+          else
+            echo "No changes to commit"
+          fi
