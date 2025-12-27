@@ -23,7 +23,7 @@ jobs:
       - name: Set up LaTeX
         uses: xu-cheng/latex-action@v3
         with:
-          root_file: current/resume.tex
+          root_file: resume.tex
           working_directory: current
       
       - name: Archive previous PDF
