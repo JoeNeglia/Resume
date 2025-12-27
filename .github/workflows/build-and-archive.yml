@@ -28,22 +28,26 @@ jobs:
       
       - name: Archive previous PDF
         run: |
-          if [ -f "resume.pdf" ]; then
+          if [ -f "current/resume.pdf" ]; then
             TIMESTAMP=$(date -u +"%Y-%m-%d_%H-%M-%S")
-            mv resume.pdf "archive/resume_${TIMESTAMP}.pdf"
+            cp current/resume.pdf "archive/resume_${TIMESTAMP}.pdf"
             echo "Archived previous resume as resume_${TIMESTAMP}.pdf"
           else
             echo "No previous resume.pdf found, skipping archive step"
           fi
       
-      - name: Move new PDF to root
+      - name: Verify new PDF exists
         run: |
-          mv current/resume.pdf resume.pdf
-          echo "New resume.pdf created"
+          if [ -f "current/resume.pdf" ]; then
+            echo "New resume.pdf built successfully in current/"
+          else
+            echo "Error: resume.pdf not found in current/"
+            exit 1
+          fi
       
       - name: Commit and push changes
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add resume.pdf archive/
+          git add current/resume.pdf archive/
           git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-build: Update resume and archive previous version [skip ci]" && git push)
